@@ -1,33 +1,12 @@
-$topCustomers = Customer::with(['sales.saleItems'])
-    ->select('customers.id', 'customers.company_name')
+use App\Models\Customer;
+use Illuminate\Support\Facades\DB;
+
+$topCustomers = Customer::query()
     ->join('sales', 'sales.customer_id', '=', 'customers.id')
     ->join('sale_items', 'sale_items.sale_id', '=', 'sales.id')
-    ->where('sales.created_at', '>=', $twelveMonthsAgo)
+    ->select('customers.id', 'customers.company_name')
+    ->selectRaw('SUM(sale_items.product_price) as total_sales')
     ->groupBy('customers.id', 'customers.company_name')
-    ->selectRaw('SUM(sale_items.price) as total_sales')
     ->orderByDesc('total_sales')
-    ->take(5)
-    ->get()
-    ->map(function ($customer) {
-        return [
-            'customer_name' => $customer->company_name,
-            'total_sales' => $customer->total_sales
-        ];
-    });
-
-    $topCustomers = Customer::with(['sales.salesItems'])
-        ->select('customers.id', 'customers.company_name')
-        ->join('sales', 'sales.customer_id', '=', 'customers.id')
-        ->join('sales_items', 'sales_items.sale_id', '=', 'sales.id')
-        ->where('sales.created_at', '>=', $twelveMonthsAgo)
-        ->groupBy('customers.id', 'customers.company_name')
-        ->selectRaw('SUM(sales_items.price) as total_sales')
-        ->orderByDesc('total_sales')
-        ->take(5)
-        ->get()
-        ->map(function ($customer) {
-            return [
-                'customer_name' => $customer->company_name,
-                'total_sales' => $customer->total_sales
-            ];
-        });
+    ->take(2)
+    ->get();
